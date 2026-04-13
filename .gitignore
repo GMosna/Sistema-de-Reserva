@@ -1,0 +1,25 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment / config
+.env
+config/conexao.php
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Security
+gerar_hash.php
