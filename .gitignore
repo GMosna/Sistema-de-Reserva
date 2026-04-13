@@ -4,7 +4,7 @@
 
 # Environment / config
 .env
-config/conexao.php
+/config/conexao.php
 
 # Logs
 *.log
@@ -12,6 +12,10 @@ config/conexao.php
 # Temporary files
 *.tmp
 *.cache
+
+# Database / backups
+*.sql
+*.bak
 
 # OS files
 .DS_Store
@@ -23,3 +27,6 @@ Thumbs.db
 
 # Security
 gerar_hash.php
+
+# Uploads (future)
+public/uploads/
