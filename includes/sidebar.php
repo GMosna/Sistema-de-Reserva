@@ -47,9 +47,9 @@ $user = currentUser();
             </li>
             <?php if ($user['perfil'] === 'admin'): ?>
             <li class="nav-item">
-                <a class="nav-link <?php echo ($current_page == 'utilizadores') ? 'active' : ''; ?>" href="utilizadores.php">
+                <a class="nav-link <?php echo ($current_page == 'usuarios') ? 'active' : ''; ?>" href="usuarios.php">
                     <i class="bi bi-people me-2"></i>
-                    Utilizadores
+                    Usuários
                 </a>
             </li>
             <?php endif; ?>

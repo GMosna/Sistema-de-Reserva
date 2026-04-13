@@ -127,7 +127,7 @@ require_once 'includes/sidebar.php';
                 <div class="stat-card">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small">Utilizadores Ativos</div>
+                            <div class="text-muted small">Usuários Ativos</div>
                             <div class="h4 mb-0"><?php echo $usersAtivos; ?></div>
                         </div>
                         <div class="stat-icon">
@@ -168,8 +168,8 @@ require_once 'includes/sidebar.php';
                                 <i class="bi bi-door-open me-2"></i>Gerir Salas
                             </a>
                             <?php if ($user['perfil'] === 'admin'): ?>
-                            <a href="utilizadores.php" class="btn btn-outline-primary">
-                                <i class="bi bi-people me-2"></i>Gerir Utilizadores
+                            <a href="usuarios.php" class="btn btn-outline-primary">
+                                <i class="bi bi-people me-2"></i>Gerir Usuários
                             </a>
                             <?php endif; ?>
                         </div>
