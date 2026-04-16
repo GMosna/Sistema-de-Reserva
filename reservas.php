@@ -7,22 +7,29 @@ $user = currentUser();
 // Handle cancel action
 if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
     $id = (int)$_GET['cancelar'];
-    if ($user['perfil'] === 'admin') {
-        $stmt = $conn->prepare("UPDATE reservas SET status = 'cancelada' WHERE id = ?");
-        if (!$stmt) die('SQL error (cancelar admin): ' . $conn->error);
+    $chk = $conn->prepare("SELECT usuario_id FROM reservas WHERE id = ?");
+    if (!$chk) die('SQL error (check cancelar): ' . $conn->error);
+    $chk->bind_param('i', $id);
+    $chk->execute();
+    $row = $chk->get_result()->fetch_assoc();
+    $chk->close();
+
+    if (!$row) {
+        setFlash('error', 'Reserva não encontrada.');
+    } elseif (!canManageReservation($row['usuario_id'], $user['id'], $user['perfil'])) {
+        setFlash('error', 'Sem permissão para cancelar esta reserva.');
+    } else {
+        $stmt = $conn->prepare("UPDATE reservas SET status = 'cancelada' WHERE id = ? AND status != 'cancelada'");
+        if (!$stmt) die('SQL error (cancelar): ' . $conn->error);
         $stmt->bind_param('i', $id);
-    } else {
-        $stmt = $conn->prepare("UPDATE reservas SET status = 'cancelada' WHERE id = ? AND usuario_id = ?");
-        if (!$stmt) die('SQL error (cancelar user): ' . $conn->error);
-        $stmt->bind_param('ii', $id, $user['id']);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            setFlash('success', 'Reserva cancelada com sucesso.');
+        } else {
+            setFlash('error', 'Reserva já se encontra cancelada.');
+        }
+        $stmt->close();
     }
-    $stmt->execute();
-    if ($stmt->affected_rows > 0) {
-        setFlash('success', 'Reserva cancelada com sucesso.');
-    } else {
-        setFlash('error', 'Reserva não encontrada ou sem permissão.');
-    }
-    $stmt->close();
     header('Location: reservas.php');
     exit();
 }
@@ -30,7 +37,7 @@ if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
 // Handle confirm action (admin only)
 if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
     $id = (int)$_GET['confirmar'];
-    if ($user['perfil'] !== 'admin') {
+    if (!isAdmin()) {
         setFlash('error', 'Apenas administradores podem confirmar reservas.');
         header('Location: reservas.php');
         exit();
@@ -60,7 +67,7 @@ if (isset($_GET['excluir']) && is_numeric($_GET['excluir'])) {
         setFlash('error', 'Reserva não encontrada.');
     } elseif ($row['status'] !== 'cancelada') {
         setFlash('error', 'Só é possível excluir reservas canceladas.');
-    } elseif ($user['perfil'] !== 'admin' && (int)$row['usuario_id'] !== (int)$user['id']) {
+    } elseif (!canManageReservation($row['usuario_id'], $user['id'], $user['perfil'])) {
         setFlash('error', 'Sem permissão para excluir esta reserva.');
     } else {
         $del = $conn->prepare("DELETE FROM reservas WHERE id = ? AND status = 'cancelada'");
@@ -249,14 +256,14 @@ require_once 'includes/sidebar.php';
                                         <span class="badge <?php echo $badge; ?>"><?php echo ucfirst($r['status']); ?></span>
                                     </td>
                                     <td>
-                                        <?php $isOwner = ((int)$r['usuario_id'] === (int)$user['id']); ?>
-                                        <?php if ($r['status'] === 'pendente' && $user['perfil'] === 'admin'): ?>
+                                        <?php $canManage = canManageReservation($r['usuario_id'], $user['id'], $user['perfil']); ?>
+                                        <?php if ($r['status'] === 'pendente' && isAdmin()): ?>
                                             <a href="reservas.php?confirmar=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-success me-1" title="Confirmar" onclick="return confirm('Confirmar esta reserva?')"><i class="bi bi-check-lg"></i></a>
                                         <?php endif; ?>
-                                        <?php if ($r['status'] !== 'cancelada' && ($isOwner || $user['perfil'] === 'admin')): ?>
+                                        <?php if ($r['status'] !== 'cancelada' && $canManage): ?>
                                             <a href="reservas.php?cancelar=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-danger" title="Cancelar" onclick="return confirm('Cancelar esta reserva?')"><i class="bi bi-x-lg"></i></a>
                                         <?php endif; ?>
-                                        <?php if ($r['status'] === 'cancelada' && ($isOwner || $user['perfil'] === 'admin')): ?>
+                                        <?php if ($r['status'] === 'cancelada' && $canManage): ?>
                                             <a href="reservas.php?excluir=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-secondary" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta reserva cancelada?')"><i class="bi bi-trash"></i></a>
                                         <?php endif; ?>
                                     </td>

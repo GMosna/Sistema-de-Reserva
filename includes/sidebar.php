@@ -45,7 +45,7 @@ $user = currentUser();
                     Salas
                 </a>
             </li>
-            <?php if ($user['perfil'] === 'admin'): ?>
+            <?php if (isAdmin()): ?>
             <li class="nav-item">
                 <a class="nav-link <?php echo ($current_page == 'usuarios') ? 'active' : ''; ?>" href="usuarios.php">
                     <i class="bi bi-people me-2"></i>
@@ -57,7 +57,11 @@ $user = currentUser();
         
         <div class="mt-auto pt-4 border-top border-secondary">
             <div class="d-flex align-items-center mb-2 px-2">
-                <i class="bi bi-person-circle text-white-50 me-2"></i>
+                <?php if (!empty($user['foto']) && file_exists(__DIR__ . '/../' . $user['foto'])): ?>
+                    <img src="<?php echo htmlspecialchars($user['foto']); ?>" alt="" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
+                <?php else: ?>
+                    <i class="bi bi-person-circle text-white-50 me-2"></i>
+                <?php endif; ?>
                 <small class="text-white-50"><?php echo htmlspecialchars($user['nome']); ?></small>
             </div>
             <a class="nav-link text-danger" href="logout.php">

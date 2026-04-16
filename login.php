@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($email === '' || $senha === '') {
         $erro = 'Por favor, preencha todos os campos.';
     } else {
-        $stmt = $conn->prepare("SELECT id, nome, email, senha, perfil, ativo FROM usuarios WHERE email = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT id, nome, email, senha, perfil, ativo, foto FROM usuarios WHERE email = ? LIMIT 1");
         if (!$stmt) {
             $erro = 'Erro interno: ' . $conn->error;
         } else {
@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['usuario_nome']  = $user['nome'];
                 $_SESSION['usuario_email'] = $user['email'];
                 $_SESSION['usuario_perfil'] = $user['perfil'];
+                $_SESSION['usuario_foto']  = $user['foto'] ?? '';
 
                 header('Location: dashboard.php');
                 exit();
@@ -51,43 +52,168 @@ $page_title = "Login";
 $additional_styles = '
 <style>
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 0;
         min-height: 100vh;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
     }
-    
+
     .main-content {
         margin-left: 0;
     }
-    
+
+    .login-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: url("public/img/bg.png") center / cover no-repeat;
+        filter: blur(5px);
+        transform: scale(1.02);
+    }
+
+    .login-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
     .login-container {
+        position: relative;
+        z-index: 2;
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 1rem;
     }
-    
+
     .login-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        padding: 2rem;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        padding: 2.5rem 2rem;
         width: 100%;
-        max-width: 400px;
+        max-width: 420px;
     }
-    
-    .logo {
-        width: 60px;
-        height: 60px;
+
+    .login-card h3 {
+        color: #fff;
+    }
+
+    .login-card p.text-muted,
+    .login-card .form-label {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+
+    .login-card .form-check-label {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .login-card .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .login-card .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .login-card .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.3);
+        color: #fff;
+    }
+
+    .login-card .input-group-text {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .login-card .btn-outline-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .login-card .btn-outline-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+    }
+
+    .login-card .btn-primary {
         background: var(--primary-color);
-        border-radius: 15px;
+        border: none;
+        padding: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: background 0.2s, transform 0.15s;
+    }
+
+    .login-card .btn-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+    }
+
+    .login-card .form-check-input {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .login-card .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .login-card .alert-danger {
+        background: rgba(220, 53, 69, 0.2);
+        border: 1px solid rgba(220, 53, 69, 0.4);
+        color: #f8d7da;
+    }
+
+    .login-card .alert-danger .btn-close {
+        filter: invert(1) grayscale(1) brightness(2);
+    }
+
+    .login-footer {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .login-footer strong {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 24px;
-        font-weight: bold;
         margin: 0 auto 1rem;
+        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.5);
+        overflow: hidden;
+    }
+
+    .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    @media (max-width: 480px) {
+        .login-card {
+            padding: 2rem 1.25rem;
+            border-radius: 16px;
+        }
     }
 </style>';
 
@@ -109,13 +235,16 @@ $additional_scripts = '
 require_once 'includes/header.php';
 ?>
 
+<div class="login-bg"></div>
+<div class="login-overlay"></div>
+
 <div class="login-container">
     <div class="login-card">
         <div class="text-center mb-4">
             <div class="logo">
-                <i class="bi bi-building"></i>
+                <img src="public/img/logo-s.png" alt="Sassi">
             </div>
-            <h3 class="fw-bold text-dark">Sassi Imóveis</h3>
+            <h3 class="fw-bold">Sassi Imóveis</h3>
             <p class="text-muted">Sistema de Reserva de Salas</p>
         </div>
 
@@ -143,7 +272,7 @@ require_once 'includes/header.php';
                     <span class="input-group-text">
                         <i class="bi bi-lock"></i>
                     </span>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="" required>
                     <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                         <i class="bi bi-eye"></i>
                     </button>
@@ -161,11 +290,8 @@ require_once 'includes/header.php';
             </button>
         </form>
         
-        <div class="text-center mt-3">
-            <small class="text-muted">Login padrão: <strong>admin@sassi.pt</strong> / <strong>admin123</strong></small>
-        </div>
-        <div class="text-center mt-2">
-            <small class="text-muted">&copy; 2024 Sassi Imóveis - Todos os direitos reservados</small>
+        <div class="text-center mt-3 login-footer">
+            <small>&copy; 2026 Sassi Imóveis - Todos os direitos reservados</small>
         </div>
     </div>
 </div>

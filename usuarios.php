@@ -2,27 +2,95 @@
 require_once 'includes/auth.php';
 requireAdmin();
 
+// ── Photo upload helper ──────────────────────────────────────────────
+function handleFotoUpload($fileInput) {
+    if (!isset($fileInput) || $fileInput['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if ($fileInput['error'] !== UPLOAD_ERR_OK) {
+        return ['error' => 'Erro no upload do ficheiro.'];
+    }
+    if ($fileInput['size'] > 2 * 1024 * 1024) {
+        return ['error' => 'A foto deve ter no máximo 2MB.'];
+    }
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo->file($fileInput['tmp_name']);
+    if (!in_array($mimeType, $allowedTypes, true)) {
+        return ['error' => 'Tipo de ficheiro não permitido. Use JPG, PNG ou WebP.'];
+    }
+    $extMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $ext = $extMap[$mimeType];
+    $filename = uniqid('user_', true) . '.' . $ext;
+    $uploadDir = __DIR__ . '/public/uploads/usuarios/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    $destination = $uploadDir . $filename;
+    if (!move_uploaded_file($fileInput['tmp_name'], $destination)) {
+        return ['error' => 'Falha ao guardar o ficheiro.'];
+    }
+    return ['path' => 'public/uploads/usuarios/' . $filename];
+}
+
+function deleteOldFoto($conn, $userId) {
+    $stmt = $conn->prepare("SELECT foto FROM usuarios WHERE id = ?");
+    if (!$stmt) return;
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if ($row && !empty($row['foto'])) {
+        $filePath = __DIR__ . '/' . $row['foto'];
+        if (file_exists($filePath)) {
+            @unlink($filePath);
+        }
+    }
+}
+
 // Handle create/update user
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uid       = (int)($_POST['user_id'] ?? 0);
     $nome      = trim($_POST['userName'] ?? '');
     $email     = trim($_POST['userEmail'] ?? '');
-    $perfil    = $_POST['userRole'] ?? 'utilizador';
+    $perfil    = $_POST['userRole'] ?? 'lider';
     $ativo_val = ($_POST['userStatus'] ?? 'ativo') === 'ativo' ? 1 : 0;
     $senha_raw = $_POST['userPassword'] ?? '';
 
-    if (!in_array($perfil, ['admin', 'lider', 'utilizador'], true)) $perfil = 'utilizador';
+    if (!in_array($perfil, ['admin', 'lider'], true)) $perfil = 'lider';
+
+    // Handle photo upload
+    $fotoResult = handleFotoUpload($_FILES['userFoto'] ?? null);
+    if ($fotoResult && isset($fotoResult['error'])) {
+        setFlash('error', $fotoResult['error']);
+        header('Location: usuarios.php');
+        exit();
+    }
+    $fotoPath = $fotoResult['path'] ?? null;
 
     if ($nome === '' || $email === '') {
         setFlash('error', 'Nome e e-mail são obrigatórios.');
     } else {
         if ($uid > 0) {
-            // Update
-            if ($senha_raw !== '') {
+            // Update — delete old photo if replacing
+            if ($fotoPath !== null) {
+                deleteOldFoto($conn, $uid);
+            }
+
+            if ($senha_raw !== '' && $fotoPath !== null) {
+                $senhaHash = password_hash($senha_raw, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("UPDATE usuarios SET nome=?, email=?, perfil=?, ativo=?, senha=?, foto=? WHERE id=?");
+                if (!$stmt) die('SQL error (update user+pwd+foto): ' . $conn->error);
+                $stmt->bind_param('sssissi', $nome, $email, $perfil, $ativo_val, $senhaHash, $fotoPath, $uid);
+            } elseif ($senha_raw !== '') {
                 $senhaHash = password_hash($senha_raw, PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("UPDATE usuarios SET nome=?, email=?, perfil=?, ativo=?, senha=? WHERE id=?");
                 if (!$stmt) die('SQL error (update user+pwd): ' . $conn->error);
                 $stmt->bind_param('sssisi', $nome, $email, $perfil, $ativo_val, $senhaHash, $uid);
+            } elseif ($fotoPath !== null) {
+                $stmt = $conn->prepare("UPDATE usuarios SET nome=?, email=?, perfil=?, ativo=?, foto=? WHERE id=?");
+                if (!$stmt) die('SQL error (update user+foto): ' . $conn->error);
+                $stmt->bind_param('sssisi', $nome, $email, $perfil, $ativo_val, $fotoPath, $uid);
             } else {
                 $stmt = $conn->prepare("UPDATE usuarios SET nome=?, email=?, perfil=?, ativo=? WHERE id=?");
                 if (!$stmt) die('SQL error (update user): ' . $conn->error);
@@ -30,6 +98,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt->execute();
             $stmt->close();
+
+            // Refresh session photo if editing own account
+            if ($uid === (int)($_SESSION['usuario_id'] ?? 0)) {
+                $_SESSION['usuario_nome'] = $nome;
+                $_SESSION['usuario_email'] = $email;
+                if ($fotoPath !== null) {
+                    $_SESSION['usuario_foto'] = $fotoPath;
+                }
+            }
+
             setFlash('success', 'Usuário atualizado com sucesso.');
         } else {
             // Create - password required
@@ -52,9 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $chk->close();
 
             $senhaHash = password_hash($senha_raw, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO usuarios (nome, email, senha, perfil, ativo) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO usuarios (nome, email, senha, foto, perfil, ativo) VALUES (?, ?, ?, ?, ?, ?)");
             if (!$stmt) die('SQL error (insert user): ' . $conn->error);
-            $stmt->bind_param('ssssi', $nome, $email, $senhaHash, $perfil, $ativo_val);
+            $stmt->bind_param('sssssi', $nome, $email, $senhaHash, $fotoPath, $perfil, $ativo_val);
             $stmt->execute();
             $stmt->close();
             setFlash('success', 'Usuário criado com sucesso.');
@@ -163,7 +241,6 @@ require_once 'includes/sidebar.php';
                             <option value="">Todos</option>
                             <option value="admin" <?php echo ($f_perfil === 'admin') ? 'selected' : ''; ?>>Administrador</option>
                             <option value="lider" <?php echo ($f_perfil === 'lider') ? 'selected' : ''; ?>>Líder</option>
-                            <option value="utilizador" <?php echo ($f_perfil === 'utilizador') ? 'selected' : ''; ?>>Usuário</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -209,11 +286,16 @@ require_once 'includes/sidebar.php';
                                     $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
                                     $colors = ['bg-primary','bg-info','bg-success','bg-warning','bg-danger','bg-dark'];
                                     $color = $colors[$u['id'] % count($colors)];
+                                    $hasFoto = !empty($u['foto']) && file_exists(__DIR__ . '/' . $u['foto']);
                                 ?>
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar <?php echo $color; ?> me-3"><?php echo $initials; ?></div>
+                                            <?php if ($hasFoto): ?>
+                                                <img src="<?php echo htmlspecialchars($u['foto']); ?>" alt="" class="rounded-circle me-3" style="width:32px;height:32px;object-fit:cover;">
+                                            <?php else: ?>
+                                                <div class="avatar <?php echo $color; ?> me-3" style="width:32px;height:32px;font-size:.75rem;"><?php echo $initials; ?></div>
+                                            <?php endif; ?>
                                             <div>
                                                 <div class="fw-semibold"><?php echo htmlspecialchars($u['nome']); ?></div>
                                                 <small class="text-muted">ID: #<?php echo str_pad($u['id'], 3, '0', STR_PAD_LEFT); ?></small>
@@ -226,13 +308,11 @@ require_once 'includes/sidebar.php';
                                         $pBadge = match($u['perfil']) {
                                             'admin'       => 'bg-danger',
                                             'lider'       => 'bg-primary',
-                                            'utilizador'  => 'bg-secondary',
                                             default       => 'bg-secondary',
                                         };
                                         $pLabel = match($u['perfil']) {
                                             'admin'       => 'Administrador',
                                             'lider'       => 'Líder',
-                                            'utilizador'  => 'Usuário',
                                             default       => $u['perfil'],
                                         };
                                         ?>
@@ -277,7 +357,7 @@ require_once 'includes/sidebar.php';
 <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="POST" action="usuarios.php">
+            <form method="POST" action="usuarios.php" enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title" id="userModalLabel">Novo Usuário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -303,7 +383,6 @@ require_once 'includes/sidebar.php';
                                 <option value="">Selecione...</option>
                                 <option value="admin">Administrador</option>
                                 <option value="lider">Líder</option>
-                                <option value="utilizador">Usuário</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -312,6 +391,14 @@ require_once 'includes/sidebar.php';
                                 <option value="ativo">Ativo</option>
                                 <option value="inativo">Inativo</option>
                             </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="userFoto" class="form-label" id="fotoLabel">Foto do Colaborador</label>
+                            <input type="file" class="form-control" id="userFoto" name="userFoto" accept=".jpg,.jpeg,.png,.webp">
+                            <small class="text-muted">JPG, PNG ou WebP. Máximo 2MB.</small>
+                            <div id="fotoPreview" class="mt-2" style="display:none;">
+                                <img id="fotoPreviewImg" src="" alt="Foto atual" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;border:2px solid #dee2e6;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -338,6 +425,9 @@ $additional_scripts = '
         document.getElementById("userStatus").value = "ativo";
         document.getElementById("pwdHint").textContent = "(obrigatória)";
         document.getElementById("userPassword").required = true;
+        document.getElementById("fotoLabel").textContent = "Foto do Colaborador";
+        document.getElementById("userFoto").value = "";
+        document.getElementById("fotoPreview").style.display = "none";
     }
     
     function editUser(u) {
@@ -351,7 +441,27 @@ $additional_scripts = '
         document.getElementById("userStatus").value = u.ativo == 1 ? "ativo" : "inativo";
         document.getElementById("pwdHint").textContent = "(deixe vazio para manter)";
         document.getElementById("userPassword").required = false;
+        document.getElementById("fotoLabel").textContent = "Alterar Foto";
+        document.getElementById("userFoto").value = "";
+        if (u.foto) {
+            document.getElementById("fotoPreviewImg").src = u.foto;
+            document.getElementById("fotoPreview").style.display = "block";
+        } else {
+            document.getElementById("fotoPreview").style.display = "none";
+        }
     }
+
+    document.getElementById("userFoto").addEventListener("change", function() {
+        var file = this.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById("fotoPreviewImg").src = e.target.result;
+                document.getElementById("fotoPreview").style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 </script>';
 require_once 'includes/footer.php';
 ?>

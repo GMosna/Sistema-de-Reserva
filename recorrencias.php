@@ -3,9 +3,8 @@ require_once 'includes/auth.php';
 requireLogin();
 $user = currentUser();
 
-// Helper: check if user owns the recurrence or is admin
 function canManageRecurrence($conn, $id, $user) {
-    if ($user['perfil'] === 'admin') return true;
+    if (isAdmin()) return true;
     $stmt = $conn->prepare("SELECT usuario_id FROM recorrencias WHERE id = ?");
     if (!$stmt) return false;
     $stmt->bind_param('i', $id);
@@ -233,7 +232,7 @@ require_once 'includes/sidebar.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php $canManage = ($user['perfil'] === 'admin' || (int)$rc['usuario_id'] === (int)$user['id']); ?>
+                                        <?php $canManage = canManageReservation($rc['usuario_id'], $user['id'], $user['perfil']); ?>
                                         <?php if ($canManage): ?>
                                         <div class="btn-group" role="group">
                                             <?php if ($rc['ativa']): ?>

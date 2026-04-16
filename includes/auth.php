@@ -36,7 +36,25 @@ function currentUser() {
         'nome'        => $_SESSION['usuario_nome']    ?? '',
         'email'       => $_SESSION['usuario_email']   ?? '',
         'perfil'      => $_SESSION['usuario_perfil']  ?? '',
+        'foto'        => $_SESSION['usuario_foto']    ?? '',
     ];
+}
+
+function isAdmin() {
+    return ($_SESSION['usuario_perfil'] ?? '') === 'admin';
+}
+
+function isLider() {
+    return ($_SESSION['usuario_perfil'] ?? '') === 'lider';
+}
+
+/**
+ * Check whether the logged-in user can manage (edit/cancel/delete) a reservation.
+ * Admin can manage any reservation; lider can only manage their own.
+ */
+function canManageReservation($reservationUserId, $loggedUserId, $perfil) {
+    if ($perfil === 'admin') return true;
+    return (int)$reservationUserId === (int)$loggedUserId;
 }
 
 /**

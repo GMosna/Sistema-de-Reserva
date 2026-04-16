@@ -2,7 +2,7 @@
 require_once 'includes/auth.php';
 requireLogin();
 $user = currentUser();
-$isAdmin = ($user['perfil'] === 'admin');
+$isAdmin = isAdmin();
 
 // Handle update room (admin only, no creation allowed)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -28,5 +28,6 @@ Thumbs.db
 # Security
 gerar_hash.php
 
-# Uploads (future)
+# Uploads
 public/uploads/
+public/uploads/usuarios/
