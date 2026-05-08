@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO recorrencias (sala_id, usuario_id, assunto, tipo, dia_semana, dia_mes, hora_inicio, hora_fim, data_inicio, data_fim, ativa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
             if (!$stmt) die('SQL error (insert recorrencia): ' . $conn->error);
             $stmt->bind_param('iissiissss', $sala_id, $user['id'], $assunto, $tipo, $dia_semana, $dia_mes, $hora_inicio, $hora_fim, $data, $fim);
-            $stmt->execute();
+            if (!$stmt->execute()) die('SQL error (insert recorrencia): ' . $stmt->error);
             $recorrencia_id = $stmt->insert_id;
             $stmt->close();
 
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
                 $ins->bind_param('iissssi', $sala_id, $user['id'], $assunto, $d, $hora_inicio, $hora_fim, $recorrencia_id);
-                $ins->execute();
+                if (!$ins->execute()) die('SQL error (insert reserva recorrente): ' . $ins->error);
                 $created++;
             }
             $ins->close();
