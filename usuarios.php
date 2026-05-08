@@ -10,8 +10,8 @@ function handleFotoUpload($fileInput) {
     if ($fileInput['error'] !== UPLOAD_ERR_OK) {
         return ['error' => 'Erro no upload do ficheiro.'];
     }
-    if ($fileInput['size'] > 2 * 1024 * 1024) {
-        return ['error' => 'A foto deve ter no máximo 2MB.'];
+    if ($fileInput['size'] > 5 * 1024 * 1024) {
+        return ['error' => 'A foto deve ter no máximo 5MB.'];
     }
     $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -395,7 +395,7 @@ require_once 'includes/sidebar.php';
                         <div class="col-12">
                             <label for="userFoto" class="form-label" id="fotoLabel">Foto do Colaborador</label>
                             <input type="file" class="form-control" id="userFoto" name="userFoto" accept=".jpg,.jpeg,.png,.webp">
-                            <small class="text-muted">JPG, PNG ou WebP. Máximo 2MB.</small>
+                            <small class="text-muted">JPG, PNG ou WebP. Máximo 5MB.</small>
                             <div id="fotoPreview" class="mt-2" style="display:none;">
                                 <img id="fotoPreviewImg" src="" alt="Foto atual" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;border:2px solid #dee2e6;">
                             </div>
