@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/auth.php';
+require_once 'includes/conflitos.php';
 requireLogin();
 
 $user = currentUser();
@@ -43,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Conflict check for the main date
+    // Conflict check for the main date (reservas + recurrence patterns)
     if (empty($erros)) {
-        $conflicts = checkConflict($conn, $sala_id, $data, $hora_inicio, $hora_fim);
+        $conflicts = checkFullConflict($conn, $sala_id, $data, $hora_inicio, $hora_fim);
         if ($conflicts > 0) {
-            $erros[] = "Conflito de horário: já existe uma reserva nessa sala para o período indicado em {$data}.";
+            $erros[] = "Conflito de horário: já existe uma reserva (ou recorrência ativa) nessa sala para o período indicado em {$data}.";
         }
     }
 
@@ -74,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$ins) die('SQL error (insert reservas recorrentes): ' . $conn->error);
 
             foreach ($dates as $d) {
-                if (checkConflict($conn, $sala_id, $d, $hora_inicio, $hora_fim) > 0) {
+                if (checkFullConflict($conn, $sala_id, $d, $hora_inicio, $hora_fim, null, $recorrencia_id) > 0) {
                     $conflictDates[] = date('d/m/Y', strtotime($d));
                     continue;
                 }
@@ -96,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO reservas (sala_id, usuario_id, assunto, data_reserva, hora_inicio, hora_fim, status) VALUES (?, ?, ?, ?, ?, ?, 'confirmada')");
             if (!$stmt) die('SQL error (insert reserva): ' . $conn->error);
             $stmt->bind_param('iissss', $sala_id, $user['id'], $assunto, $data, $hora_inicio, $hora_fim);
-            $stmt->execute();
+            if (!$stmt->execute()) die('SQL error (insert reserva): ' . $stmt->error);
             $stmt->close();
 
             setFlash('success', 'Reserva criada com sucesso!');
@@ -106,27 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         setFlash('error', implode(' ', $erros));
     }
-}
-
-/**
- * Check how many active reservations conflict with the given slot.
- */
-function checkConflict($conn, $sala_id, $data, $hora_inicio, $hora_fim, $exclude_id = null) {
-    $sql = "SELECT COUNT(*) AS total FROM reservas WHERE sala_id = ? AND data_reserva = ? AND status != 'cancelada' AND hora_inicio < ? AND hora_fim > ?";
-    if ($exclude_id) {
-        $sql .= " AND id != ?";
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) die('SQL error (conflict check): ' . $conn->error);
-        $stmt->bind_param('isssi', $sala_id, $data, $hora_fim, $hora_inicio, $exclude_id);
-    } else {
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) die('SQL error (conflict check): ' . $conn->error);
-        $stmt->bind_param('isss', $sala_id, $data, $hora_fim, $hora_inicio);
-    }
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    return (int)$row['total'];
 }
 
 /**
