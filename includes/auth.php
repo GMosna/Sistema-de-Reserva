@@ -101,3 +101,19 @@ function renderFlash() {
            . '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
     }
 }
+
+function csrfToken() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrf() {
+    $token = $_GET['csrf'] ?? $_POST['csrf'] ?? '';
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        setFlash('error', 'Ação inválida. Tente novamente.');
+        return false;
+    }
+    return true;
+}

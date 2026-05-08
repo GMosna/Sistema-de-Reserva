@@ -151,7 +151,7 @@ $additional_scripts = '
         document.getElementById("previewSala").textContent = sala === "Selecione uma sala" ? "-" : sala;
         document.getElementById("previewData").textContent = data;
         document.getElementById("previewHorario").textContent = horaInicio + " - " + horaFim;
-        document.getElementById("previewResponsavel").textContent = "' . addslashes(htmlspecialchars($user['nome'])) . '";
+        document.getElementById("previewResponsavel").textContent = ' . json_encode($user['nome']) . ';
         document.getElementById("previewParticipantes").textContent = participantes;
     }
     

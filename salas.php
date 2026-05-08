@@ -62,7 +62,9 @@ require_once 'includes/sidebar.php';
                 <div class="card room-card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><?php echo htmlspecialchars($s['nome']); ?></h5>
-                        <span class="badge bg-success">Ativa</span>
+                        <span class="badge <?php echo $s['status'] === 'ativa' ? 'bg-success' : 'bg-secondary'; ?>">
+                    <?php echo $s['status'] === 'ativa' ? 'Ativa' : 'Inativa'; ?>
+                </span>
                     </div>
                     <div class="card-body">
                         <div class="d-flex align-items-center">
@@ -73,7 +75,7 @@ require_once 'includes/sidebar.php';
                     <div class="card-footer">
                         <div class="btn-group w-100" role="group">
                             <?php if ($isAdmin): ?>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="editRoom(<?php echo htmlspecialchars(json_encode($s)); ?>)" data-bs-toggle="modal" data-bs-target="#roomModal">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="editRoom(<?php echo htmlspecialchars(json_encode($s), ENT_QUOTES, 'UTF-8'); ?>)" data-bs-toggle="modal" data-bs-target="#roomModal">
                                 <i class="bi bi-pencil"></i> Editar
                             </button>
                             <?php endif; ?>

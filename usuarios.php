@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$stmt) die('SQL error (update user): ' . $conn->error);
                 $stmt->bind_param('sssii', $nome, $email, $perfil, $ativo_val, $uid);
             }
-            $stmt->execute();
+            if (!$stmt->execute()) die('SQL error (update user exec): ' . $stmt->error);
             $stmt->close();
 
             // Refresh session photo if editing own account
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO usuarios (nome, email, senha, foto, perfil, ativo) VALUES (?, ?, ?, ?, ?, ?)");
             if (!$stmt) die('SQL error (insert user): ' . $conn->error);
             $stmt->bind_param('sssssi', $nome, $email, $senhaHash, $fotoPath, $perfil, $ativo_val);
-            $stmt->execute();
+            if (!$stmt->execute()) die('SQL error (insert user exec): ' . $stmt->error);
             $stmt->close();
             setFlash('success', 'Usuário criado com sucesso.');
         }

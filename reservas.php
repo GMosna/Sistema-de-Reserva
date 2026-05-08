@@ -6,6 +6,7 @@ $user = currentUser();
 
 // Handle cancel action
 if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
+    if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
     $id = (int)$_GET['cancelar'];
     $chk = $conn->prepare("SELECT usuario_id FROM reservas WHERE id = ?");
     if (!$chk) die('SQL error (check cancelar): ' . $conn->error);
@@ -22,7 +23,7 @@ if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
         $stmt = $conn->prepare("UPDATE reservas SET status = 'cancelada' WHERE id = ? AND status != 'cancelada'");
         if (!$stmt) die('SQL error (cancelar): ' . $conn->error);
         $stmt->bind_param('i', $id);
-        $stmt->execute();
+        if (!$stmt->execute()) die('SQL error (cancelar exec): ' . $stmt->error);
         if ($stmt->affected_rows > 0) {
             setFlash('success', 'Reserva cancelada com sucesso.');
         } else {
@@ -36,6 +37,7 @@ if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
 
 // Handle confirm action (admin only)
 if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
+    if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
     $id = (int)$_GET['confirmar'];
     if (!isAdmin()) {
         setFlash('error', 'Apenas administradores podem confirmar reservas.');
@@ -45,7 +47,7 @@ if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
     $stmt = $conn->prepare("UPDATE reservas SET status = 'confirmada' WHERE id = ?");
     if (!$stmt) die('SQL error (confirmar): ' . $conn->error);
     $stmt->bind_param('i', $id);
-    $stmt->execute();
+    if (!$stmt->execute()) die('SQL error (confirmar exec): ' . $stmt->error);
     $stmt->close();
     setFlash('success', 'Reserva confirmada.');
     header('Location: reservas.php');
@@ -54,6 +56,7 @@ if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
 
 // Handle delete action (only cancelled reservations)
 if (isset($_GET['excluir']) && is_numeric($_GET['excluir'])) {
+    if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
     $id = (int)$_GET['excluir'];
     // Fetch the reservation to validate status and ownership
     $chk = $conn->prepare("SELECT usuario_id, status FROM reservas WHERE id = ?");
@@ -73,7 +76,7 @@ if (isset($_GET['excluir']) && is_numeric($_GET['excluir'])) {
         $del = $conn->prepare("DELETE FROM reservas WHERE id = ? AND status = 'cancelada'");
         if (!$del) die('SQL error (delete): ' . $conn->error);
         $del->bind_param('i', $id);
-        $del->execute();
+        if (!$del->execute()) die('SQL error (excluir exec): ' . $del->error);
         $del->close();
         setFlash('success', 'Reserva excluída permanentemente.');
     }
@@ -258,13 +261,13 @@ require_once 'includes/sidebar.php';
                                     <td>
                                         <?php $canManage = canManageReservation($r['usuario_id'], $user['id'], $user['perfil']); ?>
                                         <?php if ($r['status'] === 'pendente' && isAdmin()): ?>
-                                            <a href="reservas.php?confirmar=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-success me-1" title="Confirmar" onclick="return confirm('Confirmar esta reserva?')"><i class="bi bi-check-lg"></i></a>
+                                            <a href="reservas.php?confirmar=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-success me-1" title="Confirmar" onclick="return confirm('Confirmar esta reserva?')"><i class="bi bi-check-lg"></i></a>
                                         <?php endif; ?>
                                         <?php if ($r['status'] !== 'cancelada' && $canManage): ?>
-                                            <a href="reservas.php?cancelar=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-danger" title="Cancelar" onclick="return confirm('Cancelar esta reserva?')"><i class="bi bi-x-lg"></i></a>
+                                            <a href="reservas.php?cancelar=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-danger" title="Cancelar" onclick="return confirm('Cancelar esta reserva?')"><i class="bi bi-x-lg"></i></a>
                                         <?php endif; ?>
                                         <?php if ($r['status'] === 'cancelada' && $canManage): ?>
-                                            <a href="reservas.php?excluir=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-secondary" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta reserva cancelada?')"><i class="bi bi-trash"></i></a>
+                                            <a href="reservas.php?excluir=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-secondary" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta reserva cancelada?')"><i class="bi bi-trash"></i></a>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

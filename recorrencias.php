@@ -16,6 +16,7 @@ function canManageRecurrence($conn, $id, $user) {
 
 // Handle pause (set ativa = 0)
 if (isset($_GET['pausar']) && is_numeric($_GET['pausar'])) {
+    if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
     $id = (int)$_GET['pausar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
@@ -33,6 +34,7 @@ if (isset($_GET['pausar']) && is_numeric($_GET['pausar'])) {
 
 // Handle resume (set ativa = 1)
 if (isset($_GET['retomar']) && is_numeric($_GET['retomar'])) {
+    if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
     $id = (int)$_GET['retomar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
@@ -50,6 +52,7 @@ if (isset($_GET['retomar']) && is_numeric($_GET['retomar'])) {
 
 // Handle delete (deactivate + cancel all future reservations)
 if (isset($_GET['eliminar']) && is_numeric($_GET['eliminar'])) {
+    if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
     $id = (int)$_GET['eliminar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
@@ -154,7 +157,6 @@ require_once 'includes/sidebar.php';
                         <select class="form-select" name="frequencia">
                             <option value="">Todas</option>
                             <option value="semanal" <?php echo ($f_tipo === 'semanal') ? 'selected' : ''; ?>>Semanal</option>
-                            <option value="quinzenal" <?php echo ($f_tipo === 'quinzenal') ? 'selected' : ''; ?>>Quinzenal</option>
                             <option value="mensal" <?php echo ($f_tipo === 'mensal') ? 'selected' : ''; ?>>Mensal</option>
                         </select>
                     </div>
@@ -236,12 +238,12 @@ require_once 'includes/sidebar.php';
                                         <?php if ($canManage): ?>
                                         <div class="btn-group" role="group">
                                             <?php if ($rc['ativa']): ?>
-                                                <a href="recorrencias.php?pausar=<?php echo $rc['id']; ?>" class="btn btn-sm btn-outline-warning" title="Pausar" onclick="return confirm('Pausar esta recorrência?')"><i class="bi bi-pause"></i></a>
+                                                <a href="recorrencias.php?pausar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-warning" title="Pausar" onclick="return confirm('Pausar esta recorrência?')"><i class="bi bi-pause"></i></a>
                                             <?php else: ?>
-                                                <a href="recorrencias.php?retomar=<?php echo $rc['id']; ?>" class="btn btn-sm btn-outline-success" title="Retomar" onclick="return confirm('Retomar esta recorrência?')"><i class="bi bi-play"></i></a>
+                                                <a href="recorrencias.php?retomar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-success" title="Retomar" onclick="return confirm('Retomar esta recorrência?')"><i class="bi bi-play"></i></a>
                                             <?php endif; ?>
                                             <?php if ($rc['ativa']): ?>
-                                                <a href="recorrencias.php?eliminar=<?php echo $rc['id']; ?>" class="btn btn-sm btn-outline-danger" title="Finalizar e cancelar futuras" onclick="return confirm('Finalizar esta recorrência e cancelar todas as reservas futuras?')"><i class="bi bi-trash"></i></a>
+                                                <a href="recorrencias.php?eliminar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-danger" title="Finalizar e cancelar futuras" onclick="return confirm('Finalizar esta recorrência e cancelar todas as reservas futuras?')"><i class="bi bi-trash"></i></a>
                                             <?php endif; ?>
                                         </div>
                                         <?php endif; ?>
