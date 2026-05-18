@@ -31,3 +31,7 @@ gerar_hash.php
 # Uploads
 public/uploads/
 public/uploads/usuarios/
+
+# Claude memory / Obsidian vault
+_claude-memory/
+.obsidian/

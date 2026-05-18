@@ -85,8 +85,12 @@ if (isset($_GET['excluir']) && is_numeric($_GET['excluir'])) {
 }
 
 // Filter parameters
+// On first load (no filter submitted), default data_ini to today
+$hasFilters   = array_key_exists('pesquisa', $_GET) || array_key_exists('data_ini', $_GET)
+             || array_key_exists('data_fim', $_GET) || array_key_exists('sala', $_GET)
+             || array_key_exists('estado', $_GET);
 $f_pesquisa   = trim($_GET['pesquisa'] ?? '');
-$f_data_ini   = $_GET['data_ini'] ?? '';
+$f_data_ini   = $hasFilters ? ($_GET['data_ini'] ?? '') : date('Y-m-d');
 $f_data_fim   = $_GET['data_fim'] ?? '';
 $f_sala       = $_GET['sala'] ?? '';
 $f_status     = $_GET['estado'] ?? '';
@@ -145,7 +149,7 @@ $dataSql = "SELECT r.*, s.nome AS sala_nome, u.nome AS usuario_nome
             JOIN salas s ON s.id = r.sala_id
             JOIN usuarios u ON u.id = r.usuario_id
             WHERE {$where}
-            ORDER BY r.data_reserva DESC, r.hora_inicio DESC
+            ORDER BY r.data_reserva ASC, r.hora_inicio ASC
             LIMIT {$limit} OFFSET {$offset}";
 $dataStmt = $conn->prepare($dataSql);
 if (!$dataStmt) die('SQL error (data): ' . $conn->error);
@@ -209,8 +213,9 @@ require_once 'includes/sidebar.php';
                             <option value="cancelada" <?php echo ($f_status === 'cancelada') ? 'selected' : ''; ?>>Cancelada</option>
                         </select>
                     </div>
-                    <div class="col-md-1 d-flex align-items-end">
+                    <div class="col-md-1 d-flex align-items-end gap-2">
                         <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i></button>
+                        <a href="reservas.php" class="btn btn-outline-secondary w-100" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>
                     </div>
                 </form>
             </div>
