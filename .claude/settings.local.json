@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\xampp\\\\htdocs\\\\reserva-salas\" status)",
+      "Bash(git -C \"C:\\\\xampp\\\\htdocs\\\\reserva-salas\" diff)"
+    ]
+  }
+}
