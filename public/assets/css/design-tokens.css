@@ -1,0 +1,80 @@
+:root {
+  /* Brand Sassi — vermelho (substitui azul em todo o app) */
+  --brand:          #DC2626;
+  --brand-dark:     #991B1B;
+  --brand-hover:    #B91C1C;
+
+  --primary:        #DC2626;
+  --primary-hover:  #B91C1C;
+  --primary-light:  rgba(220,38,38,.10);
+
+  /* Bootstrap 5 — override para vermelho */
+  --bs-primary:           #DC2626;
+  --bs-primary-rgb:       220, 38, 38;
+  --bs-link-color:        #DC2626;
+  --bs-link-hover-color:  #B91C1C;
+  --bs-link-color-rgb:    220, 38, 38;
+  --bs-focus-ring-color:  rgba(220,38,38,.25);
+
+  --success:        #10B981;
+  --success-light:  rgba(16,185,129,.12);
+  --danger:         #EF4444;
+  --danger-light:   rgba(239,68,68,.12);
+  --warning:        #F59E0B;
+  --warning-light:  rgba(245,158,11,.12);
+  --info:           #6366F1;
+  --info-light:     rgba(99,102,241,.12);
+
+  /* Neutrals */
+  --bg:             #F9FAFB;
+  --bg-card:        #FFFFFF;
+  --bg-sidebar:     #212529;
+  --text:           #111827;
+  --text-muted:     #6B7280;
+  --border:         #E5E7EB;
+
+  /* Shape */
+  --radius-sm:  0.375rem;
+  --radius:     0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+
+  /* Elevation */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.05);
+  --shadow:     0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:  0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:  0 10px 15px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.05);
+
+  /* Sidebar */
+  --sidebar-w:      260px;
+  --sidebar-w-col:  72px;
+}
+
+/* Bootstrap .btn-primary override (usa vars próprias no BS5) */
+.btn-primary {
+  --bs-btn-bg:               #DC2626;
+  --bs-btn-border-color:     #DC2626;
+  --bs-btn-hover-bg:         #B91C1C;
+  --bs-btn-hover-border-color: #B91C1C;
+  --bs-btn-active-bg:        #991B1B;
+  --bs-btn-active-border-color: #991B1B;
+  --bs-btn-disabled-bg:      #DC2626;
+  --bs-btn-disabled-border-color: #DC2626;
+}
+
+.btn-outline-primary {
+  --bs-btn-color:              #DC2626;
+  --bs-btn-border-color:       #DC2626;
+  --bs-btn-hover-bg:           #DC2626;
+  --bs-btn-hover-border-color: #DC2626;
+  --bs-btn-active-bg:          #B91C1C;
+}
+
+/* Badges, links, focus rings */
+.badge.bg-primary   { background-color: #DC2626 !important; }
+.text-primary       { color: #DC2626 !important; }
+.border-primary     { border-color: #DC2626 !important; }
+.bg-primary         { background-color: #DC2626 !important; }
+
+a { color: #DC2626; }
+a:hover { color: #B91C1C; }

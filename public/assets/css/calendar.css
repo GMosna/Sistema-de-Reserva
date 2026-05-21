@@ -1,0 +1,86 @@
+.cal-wrap {
+  background: #edeef2;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid #d5d7de;
+}
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.5rem;
+  background: #e4e5ec;
+  border-bottom: 1px solid #d5d7de;
+  flex-wrap: wrap; gap: .5rem;
+}
+.cal-title { margin: 0; color: #1e1f2b; font-weight: 700; font-size: 1.1rem; }
+.cal-title span { color: #858896; font-weight: 400; }
+.cal-nav { display: flex; align-items: center; gap: .4rem; }
+.btn-cal {
+  background: rgba(255,255,255,.5); border: 1px solid #cbcdd6;
+  color: #5c5f6e; width: 34px; height: 34px; border-radius: var(--radius);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .8rem; transition: all .2s; text-decoration: none;
+}
+.btn-cal:hover { background: #fff; color: #1e1f2b; }
+.btn-hoje {
+  background: rgba(255,255,255,.5); border: 1px solid #cbcdd6;
+  color: #5c5f6e; border-radius: var(--radius); padding: .35rem .85rem;
+  font-size: .75rem; font-weight: 600; text-decoration: none; transition: all .2s;
+}
+.btn-hoje:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cal-legend { display: flex; align-items: center; gap: .8rem; margin-left: .5rem; }
+.cal-legend-item { display: flex; align-items: center; gap: .3rem; font-size: .68rem; color: #858896; }
+.cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.cal-legend-dot.lg-conf { background: var(--success); }
+.cal-legend-dot.lg-pend { background: var(--warning); }
+.cal-legend-dot.lg-canc { background: var(--danger); opacity: .5; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+.cal-dow {
+  padding: .6rem .2rem; text-align: center; font-size: .63rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: #858896; background: #e7e8ef; border-bottom: 1px solid #d5d7de;
+}
+.cal-dow.weekend { color: rgba(239,68,68,.6); }
+.cal-day {
+  min-height: 104px; padding: .45rem; border-right: 1px solid #dddee6;
+  border-bottom: 1px solid #dddee6; background: #edeef2;
+  transition: background .2s;
+}
+.cal-day:hover { background: #e4e5ec; }
+.cal-day.outside { background: #e4e5eb; }
+.cal-day .day-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px;
+  font-size: .78rem; font-weight: 500; color: #4b4d5a; margin-bottom: 3px;
+}
+.cal-day.outside .day-num { color: #a8aab6; }
+.cal-day.today { background: rgba(220,38,38,.06); }
+.cal-day.today .day-num { background: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(220,38,38,.35); }
+.cal-evt {
+  display: flex; align-items: baseline; gap: 3px;
+  padding: 2px 6px 2px 0; margin-bottom: 2px;
+  border-radius: 5px; font-size: .67rem; line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-left: 3px solid transparent;
+}
+.cal-evt.st-confirmada { border-left-color: var(--success); background: var(--success-light); color: #065f46; }
+.cal-evt.st-pendente   { border-left-color: var(--warning); background: var(--warning-light); color: #92400e; }
+.cal-evt.st-cancelada  { border-left-color: rgba(239,68,68,.4); background: var(--danger-light); color: #9ca3af; text-decoration: line-through; }
+.cal-evt .evt-time   { font-weight: 700; font-size: .61rem; opacity: .65; flex-shrink: 0; }
+.cal-evt .evt-title  { overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.cal-evt .evt-user   { opacity: .45; font-size: .58rem; flex-shrink: 0; }
+.cal-more {
+  display: inline-block; padding: 1px 7px; margin-top: 2px;
+  border-radius: 5px; font-size: .63rem; font-weight: 600;
+  color: #737684; background: rgba(0,0,0,.06); cursor: pointer; transition: all .2s;
+}
+.cal-more:hover { background: var(--primary); color: #fff; }
+@media (max-width: 767px) {
+  .cal-day { min-height: 66px; padding: .25rem; }
+  .cal-evt .evt-user { display: none; }
+  .cal-legend { display: none; }
+}
+@media (max-width: 575px) {
+  .cal-day .day-num { width: 22px; height: 22px; font-size: .68rem; }
+  .cal-evt .evt-title { display: none; }
+}

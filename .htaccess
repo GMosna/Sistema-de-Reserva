@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Serve static assets and uploads from public/
+RewriteRule ^assets/(.*)$  public/assets/$1  [L]
+RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
+
+# Route everything else through public/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]

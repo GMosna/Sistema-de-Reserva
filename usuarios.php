@@ -143,8 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Handle deactivate
-if (isset($_GET['desativar']) && is_numeric($_GET['desativar'])) {
-    $id = (int)$_GET['desativar'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['desativar']) && is_numeric($_POST['desativar'])) {
+    if (!verifyCsrf()) { setFlash('error', 'Ação inválida.'); header('Location: usuarios.php'); exit(); }
+    $id = (int)$_POST['desativar'];
     if ($id === (int)$_SESSION['usuario_id']) {
         setFlash('error', 'Não pode desativar a sua própria conta.');
     } else {
@@ -160,10 +161,11 @@ if (isset($_GET['desativar']) && is_numeric($_GET['desativar'])) {
 }
 
 // Handle activate
-if (isset($_GET['ativar']) && is_numeric($_GET['ativar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ativar']) && is_numeric($_POST['ativar'])) {
+    if (!verifyCsrf()) { setFlash('error', 'Ação inválida.'); header('Location: usuarios.php'); exit(); }
     $stmt = $conn->prepare("UPDATE usuarios SET ativo = 1 WHERE id = ?");
     if (!$stmt) die('SQL error (ativar user): ' . $conn->error);
-    $id = (int)$_GET['ativar'];
+    $id = (int)$_POST['ativar'];
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $stmt->close();
@@ -333,11 +335,19 @@ require_once 'includes/sidebar.php';
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <?php if (!$u['ativo']): ?>
-                                                <a href="usuarios.php?ativar=<?php echo $u['id']; ?>" class="btn btn-sm btn-outline-success" title="Ativar" onclick="return confirm('Ativar este usuário?')"><i class="bi bi-check"></i></a>
+                                                <form method="post" action="usuarios.php" style="display:inline" onsubmit="return confirm('Ativar este usuário?')">
+                                                    <input type="hidden" name="ativar" value="<?php echo $u['id']; ?>">
+                                                    <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Ativar"><i class="bi bi-check"></i></button>
+                                                </form>
                                             <?php endif; ?>
                                             <?php if ((int)$u['id'] !== (int)$_SESSION['usuario_id']): ?>
                                                 <?php if ($u['ativo']): ?>
-                                                    <a href="usuarios.php?desativar=<?php echo $u['id']; ?>" class="btn btn-sm btn-outline-danger" title="Desativar" onclick="return confirm('Desativar este usuário?')"><i class="bi bi-x-lg"></i></a>
+                                                    <form method="post" action="usuarios.php" style="display:inline" onsubmit="return confirm('Desativar este usuário?')">
+                                                        <input type="hidden" name="desativar" value="<?php echo $u['id']; ?>">
+                                                        <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Desativar"><i class="bi bi-x-lg"></i></button>
+                                                    </form>
                                                 <?php endif; ?>
                                             <?php endif; ?>
                                         </div>

@@ -15,9 +15,9 @@ function canManageRecurrence($conn, $id, $user) {
 }
 
 // Handle pause (set ativa = 0)
-if (isset($_GET['pausar']) && is_numeric($_GET['pausar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pausar']) && is_numeric($_POST['pausar'])) {
     if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
-    $id = (int)$_GET['pausar'];
+    $id = (int)$_POST['pausar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
     } else {
@@ -33,9 +33,9 @@ if (isset($_GET['pausar']) && is_numeric($_GET['pausar'])) {
 }
 
 // Handle resume (set ativa = 1)
-if (isset($_GET['retomar']) && is_numeric($_GET['retomar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['retomar']) && is_numeric($_POST['retomar'])) {
     if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
-    $id = (int)$_GET['retomar'];
+    $id = (int)$_POST['retomar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
     } else {
@@ -51,9 +51,9 @@ if (isset($_GET['retomar']) && is_numeric($_GET['retomar'])) {
 }
 
 // Handle delete (deactivate + cancel all future reservations)
-if (isset($_GET['eliminar']) && is_numeric($_GET['eliminar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar']) && is_numeric($_POST['eliminar'])) {
     if (!verifyCsrf()) { header('Location: recorrencias.php'); exit(); }
-    $id = (int)$_GET['eliminar'];
+    $id = (int)$_POST['eliminar'];
     if (!canManageRecurrence($conn, $id, $user)) {
         setFlash('error', 'Sem permissão para alterar esta recorrência.');
     } else {
@@ -238,12 +238,24 @@ require_once 'includes/sidebar.php';
                                         <?php if ($canManage): ?>
                                         <div class="btn-group" role="group">
                                             <?php if ($rc['ativa']): ?>
-                                                <a href="recorrencias.php?pausar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-warning" title="Pausar" onclick="return confirm('Pausar esta recorrência?')"><i class="bi bi-pause"></i></a>
+                                                <form method="post" action="recorrencias.php" style="display:inline" onsubmit="return confirm('Pausar esta recorrência?')">
+                                                    <input type="hidden" name="pausar" value="<?php echo $rc['id']; ?>">
+                                                    <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Pausar"><i class="bi bi-pause"></i></button>
+                                                </form>
                                             <?php else: ?>
-                                                <a href="recorrencias.php?retomar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-success" title="Retomar" onclick="return confirm('Retomar esta recorrência?')"><i class="bi bi-play"></i></a>
+                                                <form method="post" action="recorrencias.php" style="display:inline" onsubmit="return confirm('Retomar esta recorrência?')">
+                                                    <input type="hidden" name="retomar" value="<?php echo $rc['id']; ?>">
+                                                    <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Retomar"><i class="bi bi-play"></i></button>
+                                                </form>
                                             <?php endif; ?>
                                             <?php if ($rc['ativa']): ?>
-                                                <a href="recorrencias.php?eliminar=<?php echo $rc['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-danger" title="Finalizar e cancelar futuras" onclick="return confirm('Finalizar esta recorrência e cancelar todas as reservas futuras?')"><i class="bi bi-trash"></i></a>
+                                                <form method="post" action="recorrencias.php" style="display:inline" onsubmit="return confirm('Finalizar esta recorrência e cancelar todas as reservas futuras?')">
+                                                    <input type="hidden" name="eliminar" value="<?php echo $rc['id']; ?>">
+                                                    <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Finalizar e cancelar futuras"><i class="bi bi-trash"></i></button>
+                                                </form>
                                             <?php endif; ?>
                                         </div>
                                         <?php endif; ?>

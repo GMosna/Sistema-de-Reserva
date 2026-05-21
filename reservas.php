@@ -5,9 +5,9 @@ requireLogin();
 $user = currentUser();
 
 // Handle cancel action
-if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancelar']) && is_numeric($_POST['cancelar'])) {
     if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
-    $id = (int)$_GET['cancelar'];
+    $id = (int)$_POST['cancelar'];
     $chk = $conn->prepare("SELECT usuario_id FROM reservas WHERE id = ?");
     if (!$chk) die('SQL error (check cancelar): ' . $conn->error);
     $chk->bind_param('i', $id);
@@ -36,9 +36,9 @@ if (isset($_GET['cancelar']) && is_numeric($_GET['cancelar'])) {
 }
 
 // Handle confirm action (admin only)
-if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmar']) && is_numeric($_POST['confirmar'])) {
     if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
-    $id = (int)$_GET['confirmar'];
+    $id = (int)$_POST['confirmar'];
     if (!isAdmin()) {
         setFlash('error', 'Apenas administradores podem confirmar reservas.');
         header('Location: reservas.php');
@@ -55,9 +55,9 @@ if (isset($_GET['confirmar']) && is_numeric($_GET['confirmar'])) {
 }
 
 // Handle delete action (only cancelled reservations)
-if (isset($_GET['excluir']) && is_numeric($_GET['excluir'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir']) && is_numeric($_POST['excluir'])) {
     if (!verifyCsrf()) { header('Location: reservas.php'); exit(); }
-    $id = (int)$_GET['excluir'];
+    $id = (int)$_POST['excluir'];
     // Fetch the reservation to validate status and ownership
     $chk = $conn->prepare("SELECT usuario_id, status FROM reservas WHERE id = ?");
     if (!$chk) die('SQL error (check excluir): ' . $conn->error);
@@ -266,13 +266,25 @@ require_once 'includes/sidebar.php';
                                     <td>
                                         <?php $canManage = canManageReservation($r['usuario_id'], $user['id'], $user['perfil']); ?>
                                         <?php if ($r['status'] === 'pendente' && isAdmin()): ?>
-                                            <a href="reservas.php?confirmar=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-success me-1" title="Confirmar" onclick="return confirm('Confirmar esta reserva?')"><i class="bi bi-check-lg"></i></a>
+                                            <form method="post" action="reservas.php" style="display:inline" onsubmit="return confirm('Confirmar esta reserva?')">
+                                                <input type="hidden" name="confirmar" value="<?php echo $r['id']; ?>">
+                                                <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-success me-1" title="Confirmar"><i class="bi bi-check-lg"></i></button>
+                                            </form>
                                         <?php endif; ?>
                                         <?php if ($r['status'] !== 'cancelada' && $canManage): ?>
-                                            <a href="reservas.php?cancelar=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-danger" title="Cancelar" onclick="return confirm('Cancelar esta reserva?')"><i class="bi bi-x-lg"></i></a>
+                                            <form method="post" action="reservas.php" style="display:inline" onsubmit="return confirm('Cancelar esta reserva?')">
+                                                <input type="hidden" name="cancelar" value="<?php echo $r['id']; ?>">
+                                                <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                                            </form>
                                         <?php endif; ?>
                                         <?php if ($r['status'] === 'cancelada' && $canManage): ?>
-                                            <a href="reservas.php?excluir=<?php echo $r['id']; ?>&csrf=<?php echo csrfToken(); ?>" class="btn btn-sm btn-outline-secondary" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta reserva cancelada?')"><i class="bi bi-trash"></i></a>
+                                            <form method="post" action="reservas.php" style="display:inline" onsubmit="return confirm('Tem certeza que deseja excluir esta reserva cancelada?')">
+                                                <input type="hidden" name="excluir" value="<?php echo $r['id']; ?>">
+                                                <input type="hidden" name="csrf" value="<?php echo csrfToken(); ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Excluir"><i class="bi bi-trash"></i></button>
+                                            </form>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
